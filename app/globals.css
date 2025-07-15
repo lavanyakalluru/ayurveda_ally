@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 45 20% 97%;
+    --foreground: 30 15% 15%;
+    --card: 45 25% 95%;
+    --card-foreground: 30 15% 15%;
+    --popover: 45 25% 95%;
+    --popover-foreground: 30 15% 15%;
+    --primary: 35 65% 45%;
+    --primary-foreground: 45 20% 97%;
+    --secondary: 120 25% 85%;
+    --secondary-foreground: 120 15% 25%;
+    --muted: 45 15% 90%;
+    --muted-foreground: 30 10% 45%;
+    --accent: 50 80% 75%;
+    --accent-foreground: 30 15% 15%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 45 15% 85%;
+    --input: 45 15% 85%;
+    --ring: 35 65% 45%;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 30 15% 8%;
+    --foreground: 45 20% 95%;
+    --card: 30 15% 10%;
+    --card-foreground: 45 20% 95%;
+    --popover: 30 15% 10%;
+    --popover-foreground: 45 20% 95%;
+    --primary: 35 65% 55%;
+    --primary-foreground: 30 15% 8%;
+    --secondary: 120 15% 15%;
+    --secondary-foreground: 120 25% 85%;
+    --muted: 30 10% 15%;
+    --muted-foreground: 45 10% 65%;
+    --accent: 50 60% 25%;
+    --accent-foreground: 45 20% 95%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 30 10% 20%;
+    --input: 30 10% 20%;
+    --ring: 35 65% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+.font-serif {
+  font-family: var(--font-playfair);
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, #f5e6d3 0%, #e8f5e8 50%, #fff8dc 100%);
+}
+
+.dosha-vata {
+  background: linear-gradient(135deg, #e8f4f8 0%, #d1e7dd 100%);
+}
+
+.dosha-pitta {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+}
+
+.dosha-kapha {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+}
