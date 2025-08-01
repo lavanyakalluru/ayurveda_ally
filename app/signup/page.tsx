@@ -48,17 +48,47 @@ export default function SignUpPage() {
 
     setIsLoading(true)
 
-    // Simulate account creation
-    setTimeout(() => {
-      signIn({
-        id: "1",
-        name: formData.name,
-        email: formData.email,
-        avatar: "/placeholder.svg?height=40&width=40",
+    try {
+      const res = await fetch("/api/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+        }),
       })
-      setIsLoading(false)
+
+      if (!res.ok) {
+        const error = await res.json()
+        alert(error.message || "Something went wrong")
+        setIsLoading(false)
+        return
+      }
+
+      const user = await res.json()
+
+      signIn({
+        email: user.email,
+        password: null,
+        name: user.name,
+        avatar: "/placeholder.svg?height=40&width=40",
+        phone: "",
+        location: "",
+        bio: "",
+        birthDate: "",
+        occupation: "",
+      })
+
       router.push("/")
-    }, 1500)
+    } catch (err) {
+      console.error(err)
+      alert("Signup failed")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -188,10 +218,7 @@ export default function SignUpPage() {
               <div className="absolute inset-0 flex items-center">
                 <Separator className="w-full" />
               </div>
-              
             </div>
-
-           
 
             <div className="text-center text-sm">
               <span className="text-muted-foreground">Already have an account? </span>

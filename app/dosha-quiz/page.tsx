@@ -1,12 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 import { DoshaResult } from "@/components/dosha-result"
+import { useAuth } from "@/hooks/use-auth"
+import Link from "next/link"
 
 const questions = [
   {
@@ -84,6 +86,7 @@ const questions = [
 ]
 
 export default function DoshaQuizPage() {
+  const { user } = useAuth()
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [answers, setAnswers] = useState<Record<number, string>>({})
   const [showResult, setShowResult] = useState(false)
@@ -119,6 +122,22 @@ export default function DoshaQuizPage() {
     return { dominant, scores }
   }
 
+  useEffect(() => {
+    if (showResult && user?.email) {
+      const result = calculateDosha()
+      fetch("/api/dosha/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userEmail: user.email,
+          dominantDosha: result.dominant,
+          scores: result.scores,
+          answers,
+        }),
+      }).catch((err) => console.error("Save failed:", err))
+    }
+  }, [showResult, user?.email, answers])
+
   if (showResult) {
     const result = calculateDosha()
     return (
@@ -134,6 +153,20 @@ export default function DoshaQuizPage() {
   }
 
   const progress = ((currentQuestion + 1) / questions.length) * 100
+
+  if (!user) {
+    return (
+      <div className="min-h-screen gradient-bg flex items-center justify-center py-12 px-4">
+        <div className="text-center">
+          <h1 className="font-serif text-3xl font-bold mb-4">Please sign in to take the quiz</h1>
+          <p className="text-muted-foreground mb-6">You need to be signed in to save your dosha results</p>
+          <Button asChild>
+            <Link href="/signin">Sign In</Link>
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen gradient-bg py-12">

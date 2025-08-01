@@ -3,16 +3,22 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 
 interface User {
-  id: string
-  name: string
   email: string
+  password: any
+  name?: string
   avatar?: string
+  phone?: string
+  location?: string
+  bio?: string
+  birthDate?: string
+  occupation?: string
 }
 
 interface AuthContextType {
   user: User | null
   signIn: (user: User) => void
   signOut: () => void
+  updateUser: (updates: Partial<User>) => void
   isAuthenticated: boolean
 }
 
@@ -39,12 +45,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("ayurveda-user")
   }
 
+  const updateUser = (updates: Partial<User>) => {
+    if (user) {
+      const updatedUser = { ...user, ...updates }
+      setUser(updatedUser)
+      localStorage.setItem("ayurveda-user", JSON.stringify(updatedUser))
+    }
+  }
+
   return (
     <AuthContext.Provider
       value={{
         user,
         signIn,
         signOut,
+        updateUser,
         isAuthenticated: !!user,
       }}
     >

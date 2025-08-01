@@ -1,12 +1,14 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Send, Sparkles, Leaf, Heart, Brain, ClipboardCopy, ChevronDown, ChevronUp, Bot } from "lucide-react";
+import { Loader2, Send, Sparkles, Leaf, Heart, Brain, ClipboardCopy, ChevronDown, ChevronUp, Bot, AlertCircle } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import Link from "next/link";
 
 const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
@@ -55,6 +57,7 @@ function parseGeminiResponse(content: string): { recommendations: Recommendation
 }
 
 export default function AIAdvisorPage() {
+  const { user } = useAuth();
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
@@ -63,6 +66,28 @@ export default function AIAdvisorPage() {
   const [error, setError] = useState<string | null>(null);
   const [showFullResponse, setShowFullResponse] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [doshaResults, setDoshaResults] = useState<any>(null);
+  const [isLoadingDosha, setIsLoadingDosha] = useState(false);
+
+  // Fetch dosha quiz results when component mounts
+  useEffect(() => {
+    if (user?.email) {
+      setIsLoadingDosha(true);
+      fetch(`/api/dosha/results?email=${encodeURIComponent(user.email)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.results && data.results.length > 0) {
+            setDoshaResults(data.results[0]); // Get most recent result
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching dosha results:", error);
+        })
+        .finally(() => {
+          setIsLoadingDosha(false);
+        });
+    }
+  }, [user?.email]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,7 +100,14 @@ export default function AIAdvisorPage() {
     setFullResponse("");
 
     try {
-      const prompt = `You are an expert Ayurveda advisor.\n\nGiven the following user input, provide:\n1. Three personalized recommendations in the format: [Category] Title: Description\n2. Three follow-up questions to clarify the user's health situation.\n\nUser input: ${input}`;
+      // Create enhanced prompt with dosha information
+      let prompt = `You are an expert Ayurveda advisor.\n\n`;
+      
+      if (doshaResults) {
+        prompt += `User's Dosha Profile:\n- Primary Dosha: ${doshaResults.dominantDosha}\n- Vata Score: ${doshaResults.scores?.vata || 0}\n- Pitta Score: ${doshaResults.scores?.pitta || 0}\n- Kapha Score: ${doshaResults.scores?.kapha || 0}\n\n`;
+      }
+      
+      prompt += `Given the following user input, provide:\n1. Three personalized recommendations in the format: [Category] Title: Description\n2. Three follow-up questions to clarify the user's health situation.\n\nUser input: ${input}`;
 
       const body = {
         contents: [{ parts: [{ text: prompt }] }],
@@ -123,10 +155,69 @@ export default function AIAdvisorPage() {
           </p>
         </div>
 
+        {/* Dosha Profile Card */}
+        {user?.email && (
+          <Card className="shadow-lg mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Sparkles className="h-5 w-5" />
+                <span>Your Dosha Profile</span>
+                {isLoadingDosha && <Loader2 className="h-4 w-4 animate-spin" />}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {doshaResults ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Primary Dosha:</span>
+                    <Badge variant="default" className="capitalize">
+                      {doshaResults.dominantDosha}
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div className="text-center">
+                      <div className="font-medium">Vata</div>
+                      <div className="text-muted-foreground">{doshaResults.scores?.vata || 0}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="font-medium">Pitta</div>
+                      <div className="text-muted-foreground">{doshaResults.scores?.pitta || 0}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="font-medium">Kapha</div>
+                      <div className="text-muted-foreground">{doshaResults.scores?.kapha || 0}</div>
+                    </div>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-2">
+                    ✓ Personalized recommendations will be based on your dosha profile
+                  </div>
+                </div>
+                             ) : !isLoadingDosha ? (
+                 <div className="space-y-3">
+                   <div className="flex items-center space-x-2 text-amber-600">
+                     <AlertCircle className="h-4 w-4" />
+                     <span className="text-sm">No dosha quiz results found.</span>
+                   </div>
+                   <Button asChild variant="outline" size="sm">
+                     <Link href="/dosha-quiz">Take Dosha Quiz</Link>
+                   </Button>
+                 </div>
+              ) : (
+                <div className="text-sm text-muted-foreground">Loading your dosha profile...</div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Input Card */}
         <Card className="shadow-xl mb-8">
           <CardHeader>
             <CardTitle>Tell us about your health concerns</CardTitle>
+            {doshaResults && (
+              <p className="text-sm text-muted-foreground">
+                Your recommendations will be personalized based on your {doshaResults.dominantDosha} dosha profile.
+              </p>
+            )}
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">

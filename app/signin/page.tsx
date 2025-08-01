@@ -24,19 +24,43 @@ export default function SignInPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-
-    // Simulate authentication
-    setTimeout(() => {
-      signIn({
-        id: "1",
-        name: "Lavanya",
-        email: email,
-        avatar: "/placeholder.svg?height=40&width=40",
+  
+    try {
+      const res = await fetch("/api/signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       })
-      setIsLoading(false)
+  
+      const data = await res.json()
+  
+      if (!res.ok) {
+        alert(data.error || "Failed to sign in")
+        setIsLoading(false)
+        return
+      }
+  
+      signIn({
+        name: data.user.name,
+        email: data.user.email,
+        password: null,
+        avatar: data.user.avatar,
+        phone: data.user.phone,
+        location: data.user.location,
+        bio: data.user.bio,
+        birthDate: data.user.birthDate,
+        occupation: data.user.occupation,
+      })
+  
       router.push("/")
-    }, 1500)
+    } catch (err) {
+      console.error("Login error:", err)
+      alert("Something went wrong!")
+    } finally {
+      setIsLoading(false)
+    }
   }
+  
 
   return (
     <div className="min-h-screen gradient-bg flex items-center justify-center py-12 px-4">
